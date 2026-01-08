@@ -1,0 +1,3222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>School Attendance Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f0f2f5}
+
+/* LOGIN */
+#loginBox input{width:100%;padding:10px;margin:10px 0}
+#loginBox button{padding:10px 20px;background:#4CAF50;color:#fff;border:none;border-radius:5px}
+
+/* APP */
+.app{display:flex;height:100vh}
+.sidebar{width:220px;background:#2c3e50;color:#fff;padding:20px}
+.sidebar a{display:block;color:#fff;padding:10px;margin:5px 0;text-decoration:none;border-radius:5px}
+.sidebar a:hover{background:#34495e}
+.main-content{flex:1;padding:20px;overflow:auto}
+
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{border:1px solid #ccc;padding:8px;text-align:center}
+th{background:#f4f4f4}
+
+button{padding:6px 12px;margin:5px;border:none;border-radius:4px;cursor:pointer}
+.green{background:#4CAF50;color:#fff}
+.red{background:#e74c3c;color:#fff}
+.alert{color:red;font-weight:bold;margin-top:10px}
+</style>
+<style>
+/* ===== General Styling ===== */
+/* ===== General Styling ===== */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Segoe UI',sans-serif;
+}
+
+body{
+  background:#f1f5f9;
+}
+
+/* ===== LOGIN ===== */
+#loginPage{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+#loginBox{
+  background:#fff;
+  padding:30px;
+  border-radius:14px;
+  width:300px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+#loginBox input{
+  width:100%;
+  padding:10px;
+  margin:10px 0;
+}
+
+#loginBox button{
+  width:100%;
+  padding:10px;
+  background:#0f172a;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+}
+
+/* ===== MENU BUTTON ===== */
+.menu-btn{
+  position:fixed;
+  top:15px;
+  left:15px;
+  font-size:22px;
+  background:#0f172a;
+  color:#fff;
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  z-index:1100;
+  display:none;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  position:fixed;
+  top:0;
+  left:-260px;
+  width:260px;
+  height:100vh;
+  background:#0f172a;
+  color:#fff;
+  padding-top:80px;
+  transition:0.3s;
+  z-index:1000;
+}
+
+.sidebar.show{
+  left:0;
+}
+
+.sidebar h3{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+.sidebar a{
+  display:block;
+  padding:15px 25px;
+  color:white;
+  text-decoration:none;
+}
+
+.sidebar a:hover{
+  background:#1e293b;
+}
+
+/* ===== CONTENT ===== */
+.content{
+  min-height:100vh;
+  padding:30px;
+  transition:margin-left 0.3s;
+}
+
+@media(min-width:769px){
+  .sidebar.show ~ .content{
+    margin-left:260px;
+  }
+}
+
+/* ===== PAGE ===== */
+.page{
+  display:none;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  text-align:center;
+}
+
+/* ===== DASHBOARD CENTER ===== */
+#teacher-dashboard h2{
+  font-size:38px;
+  margin-bottom:10px;
+}
+
+#teacher-dashboard p{
+  color:#64748b;
+  font-size:18px;
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  .menu-btn{display:block;}
+  .content{padding:20px;}
+}
+
+
+
+
+
+</style>
+</head>
+
+<body>
+
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div id="loginBox">
+    <h2>School Portal Login</h2>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- STUDENT HEADER -->
+<div id="studentHeader" class="header" style="display:none">
+  <div class="header-left">
+    <img src="school-logo.png" style="width:50px">
+    <div>
+      <b>Gyan Jyoti Senior Secondary School</b><br>
+      Bhimpura No.1, Ballia
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div style="text-align:right">
+      <b id="stuName"></b><br>
+      Class <span id="stuClass"></span>
+    </div>
+    <img id="stuPhoto" style="width:45px;height:45px;border-radius:50%">
+  </div>
+</div>
+<div id="studentSidebar" class="sidebar" style="display:none">
+  <h3>STUDENT MENU</h3>
+  <ul>
+    <li onclick="showStudentPage('dashboard')">🏠 Dashboard</li>
+    <li onclick="showStudentPage('attendance')">📊 My Attendance</li>
+    <li onclick="showStudentPage('subjects')">📚 Subjects</li>
+    <li onclick="showStudentPage('fees')">💰 Fees</li>
+    <li onclick="logout()">🚪 Logout</li>
+  </ul>
+</div>
+<div id="studentApp" style="display:none">
+  <div id="student-dashboard" class="student-page"></div>
+  <div id="student-attendance" class="student-page" style="display:none"></div>
+  <div id="student-subjects" class="student-page" style="display:none"></div>
+  <div id="student-fees" class="student-page" style="display:none"></div>
+</div>
+
+
+
+<!-- APP -->
+<!-- TEACHER SIDEBAR -->
+<div class="sidebar" id="teacherSidebar" style="display:none">
+  <h3>👨‍🏫 Teacher Panel</h3>
+  <a href="#" onclick="showTeacherPage('dashboard')">🏠 Dashboard</a>
+  <a href="#" onclick="showTeacherPage('attendance')">📋 Attendance</a>
+  <a href="#" onclick="logout()">🚪 Logout</a>
+</div>
+
+<button class="menu-btn" id="teacherMenuBtn" onclick="toggleTeacherSidebar()" style="display:none">☰</button>
+
+
+<div class="content" id="teacherApp" style="display:none">
+
+  <div id="teacher-dashboard" class="page">
+    <h2>Teacher Dashboard</h2>
+    <p>Welcome Teacher</p>
+  </div>
+
+  <div id="teacher-attendance" class="page" style="display:none">
+    <h2>Take Attendance</h2>
+    <!-- tumhara existing attendance code yahin rahega -->
+  </div>
+
+</div>
+
+
+
+
+<script>
+// USERS
+const users = [
+ {u:"Ramesh Maurya",p:"1234",role:"teacher",class:6}, // ✅ Class assigned
+ // ... students
+ {
+  u:"Anushka Kumari",
+  p:"1113",
+  role:"student",
+  class:6,
+  section:"A",
+  name:"Anushka Kumari",
+  photo:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQ1rOLJTn83vjtOMNy4JwKcgOlysrrHBOx7w&s"
+ },
+
+ {
+  u:"Archana Kumari Rav",
+  p:"1213",
+  role:"student",
+  class:6,
+  section:"A",
+  name:"Archana Kumari Rav",
+  photo:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXl18GH-82VOCxaQRy6aXntntQUCfa7vproA&s"
+ },
+
+ {
+  u:"Navya Yadav",
+  p:"1413",
+  role:"student",
+  class:6,
+  name:"Navya Yadav",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"NEHA YADAV",
+  p:"1513",
+  role:"student",
+  class:6,
+  name:"NEHA YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"NITIKA YADAV",
+  p:"1613",
+  role:"student",
+  class:6,
+  name:"NITIKA YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"PRASANYA YADAV",
+  p:"1713",
+  role:"student",
+  class:6,
+  name:"PRASANYA YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SHIVANGI CHAUHAN",
+  p:"1813",
+  role:"student",
+  class:6,
+  name:"SHIVANGI CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SHIWANGI",
+  p:"1913",
+  role:"student",
+  class:6,
+  name:"SHIWANGI",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SIYA SHARMA",
+  p:"2013",
+  role:"student",
+  class:6,
+  name:"SIYA SHARMA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SONALI RAJBHAR",
+  p:"2113",
+  role:"student",
+  class:6,
+  name:"SONALI RAJBHAR",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ABHINANDAN YADAV",
+  p:"2213",
+  role:"student",
+  class:6,
+  name:"ABHINANDAN YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ADARSH KUMAR",
+  p:"2313",
+  role:"student",
+  class:6,
+  name:"ADARSH KUMAR",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ADITYA CHAUHAN",
+  p:"2413",
+  role:"student",
+  class:6,
+  name:"ADITYA CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ADITYA CHAUHAN",
+  p:"2513",
+  role:"student",
+  class:6,
+  name:"ADITYA CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"AMAN MAURYA",
+  p:"2613",
+  role:"student",
+  class:6,
+  name:"AMAN MAURYA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ANSH YADAV",
+  p:"2713",
+  role:"student",
+  class:6,
+  name:"ANSH YADAVv",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ANSH YADAV",
+  p:"2813",
+  role:"student",
+  class:6,
+  name:"ANSH YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ANUJ KUMAR GUPTA",
+  p:"2913",
+  role:"student",
+  class:6,
+  name:"ANUJ KUMAR GUPTA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ANUP SHARMA",
+  p:"3013",
+  role:"student",
+  class:6,
+  name:"ANUP SHARMA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ARUSH PASWAN",
+  p:"3113",
+  role:"student",
+  class:6,
+  name:"ARUSH PASWAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ARYAN YADAV",
+  p:"3213",
+  role:"student",
+  class:6,
+  name:"ARYAN YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"DEVANAND GUPTA",
+  p:"3313",
+  role:"student",
+  class:6,
+  name:"DEVANAND GUPTA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"DIPANSHU CHAUHAN",
+  p:"3413",
+  role:"student",
+  class:6,
+  name:"DIPANSHU CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"HARSHIT MAURYA",
+  p:"3513",
+  role:"student",
+  class:6,
+  name:"HARSHIT MAURYA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"VIVEK RAJBHAR",
+  p:"3613",
+  role:"student",
+  class:6,
+  name:"VIVEK RAJBHAR",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"JAYSHAKTI MAURYA",
+  p:"3713",
+  role:"student",
+  class:6,
+  name:"JAYSHAKTI MAURYA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"KASIM ALI",
+  p:"3813",
+  role:"student",
+  class:6,
+  name:"KASIM ALI",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"KRISHNA CHAUHAN",
+  p:"3913",
+  role:"student",
+  class:6,
+  name:"KRISHNA CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"KRISHNA MADDHESHIYA",
+  p:"4013",
+  role:"student",
+  class:6,
+  name:"KRISHNA MADDHESHIYA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"KRISHNA PASWAN",
+  p:"4113",
+  role:"student",
+  class:6,
+  name:"KRISHNA PASWAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"NAVEEN MAURYA",
+  p:"4213",
+  role:"student",
+  class:6,
+  name:"NAVEEN MAURYA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"PRANJAL YADAV",
+  p:"4313",
+  role:"student",
+  class:6,
+  name:"PRANJAL YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"YASHWANT CHAUHAN",
+  p:"4413",
+  role:"student",
+  class:6,
+  name:"YASHWANT CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"RAGHAV KUMAR GUPTA",
+  p:"4513",
+  role:"student",
+  class:6,
+  name:"RAGHAV KUMAR GUPTA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"RAGHU YADAV",
+  p:"4613",
+  role:"student",
+  class:6,
+  name:"RAGHU YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"RAHUL SHARMA",
+  p:"4713",
+  role:"student",
+  class:6,
+  name:"RAHUL SHARMA",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"RAVI KUMAR",
+  p:"4813",
+  role:"student",
+  class:6,
+  name:"RAVI KUMAR",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"ROHIT YADAV",
+  p:"4913",
+  role:"student",
+  class:6,
+  name:"ROHIT YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SATYAM KUMAR",
+  p:"5013",
+  role:"student",
+  class:6,
+  name:"SATYAM KUMAR",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SATYAM KUMAR",
+  p:"5113",
+  role:"student",
+  class:6,
+  name:"SATYAM KUMAR",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SATYAM YADAV",
+  p:"5213",
+  role:"student",
+  class:6,
+  name:"SATYAM YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SAURABH CHAUHAN",
+  p:"5313",
+  role:"student",
+  class:6,
+  name:"SAURABH CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SHIVAM CHAUHAN",
+  p:"5413",
+  role:"student",
+  class:6,
+  name:"SHIVAM CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SHIVAM CHAUHAN",
+  p:"5513",
+  role:"student",
+  class:6,
+  name:"SHIVAM CHAUHAN",
+  photo:"images/navya.jpg"
+ },
+
+ {
+  u:"SURAJ YADAV",
+  p:"5613",
+  role:"student",
+  class:6,
+  name:"SURAJ YADAV",
+  photo:"images/navya.jpg"
+ },
+
+ // ✅ ADD INSIDE users array (TOP ya BOTTOM kahin bhi)
+{u:"Suresh Kumar",p:"7777",role:"teacher",class:7},
+
+{
+  u:"ANAMIKA",
+  p:"7001",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANAMIKA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANAMIKA",
+  p:"7002",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANAMIKA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANJALI MAURYA",
+  p:"7003",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANJALI MAURYA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANJALI SHARMA",
+  p:"7004",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANJALI SHARMA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANNU CHAUHAN",
+  p:"7005",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANNU CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANSHIKA RAO",
+  p:"7006",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANSHIKA RAO",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANSHIKA YADAV",
+  p:"7007",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANSHIKA YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANSHIKA YADAV",
+  p:"7008",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANSHIKA YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANUSHAKA YADAV",
+  p:"7009",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANUSHAKA YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ARCHANA KUMARI",
+  p:"7010",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ARCHANA KUMARI",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ARUSHI THAKUR",
+  p:"7011",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ARUSHI THAKUR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"JYOTI",
+  p:"7012",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"JYOTI",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"KHUSHBOO YADAV",
+  p:"7013",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"KHUSHBOO YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"LAKSHMI GOND",
+  p:"7014",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"LAKSHMI GOND",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"MANISHA",
+  p:"7015",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"MANISHA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"MANORAMA",
+  p:"7016",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"MANORAMA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"POOJA YADAV",
+  p:"7017",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"POOJA YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"PRIYA GUPTA",
+  p:"7018",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"PRIYA GUPTA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"RADHA YADAV",
+  p:"7019",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"RADHA YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"RADHA YADAV",
+  p:"7020",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"RADHA YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"RANJANA CHAUHAN",
+  p:"70021",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"RANJANA CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"RENU CHAUHAN",
+  p:"7022",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"RENU CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ROSHANI",
+  p:"7023",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ROSHANI",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SANDHYA CHAUHAN",
+  p:"7024",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SANDHYA CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SAUMYA MAURYA",
+  p:"7025",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SAUMYA MAURYA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SAUMYA SHARMA",
+  p:"7026",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SAUMYA SHARMA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SHIVANGI",
+  p:"7027",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHIVANGI",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SHIVANGI",
+  p:"7028",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHIVANGI",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"PRIYANKA MAURYA",
+  p:"7029",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"PRIYANKA MAURYA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"VARSHA",
+  p:"7030",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"VARSHA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SHIKHA",
+  p:"7031",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHIKHA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ATIF AKHTAR",
+  p:"7032",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ATIF AKHTAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"DURGESH GOND",
+  p:"7033",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"DURGESH GOND",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SHIVAM RAJBHAR",
+  p:"7034",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHIVAM RAJBHAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"NILESH RAJBHAR",
+  p:"7035",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"NILESH RAJBHAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANKIT YADAV",
+  p:"7036",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANKIT YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"PREM NATH YADAV",
+  p:"7037",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"PREM NATH YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"UMESH CHAUHAN",
+  p:"7038",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"UMESH CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SHIVAM CHAUHAN",
+  p:"7039",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHIVAM CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ADARSH KUMAR GUPTA",
+  p:"7040",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ADARSH KUMAR GUPTA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ABHISHEK YADAV",
+  p:"7041",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ABHISHEK YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ADARSH GUPTA",
+  p:"7042",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ADARSH GUPTA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ADITYA RAO",
+  p:"7043",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ADITYA RAO",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ADITYA YADAV",
+  p:"7044",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ADITYA YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"BITTOO",
+  p:"7045",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"BITTOO",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"AKHAND PRAKASH SINGH",
+  p:"7046",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"AKHAND PRAKASH SINGH",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AMIT PRAJAPATI",
+  p:"7047",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"AMIT PRAJAPATI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AMIT YADAV",
+  p:"7048",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"AMIT YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANKIT KUMAR CHAUHAN",
+  p:"7049",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANKIT KUMAR CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANUJ KUMAR",
+  p:"7050",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ANUJ KUMAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ARYESH MISHRA",
+  p:"7051",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ARYESH MISHRA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AYUSH GUPTA",
+  p:"7052",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"AYUSH GUPTA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AYUSH KUMAR",
+  p:"7053",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"AYUSH KUMAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"BRIJRAJ GOND",
+  p:"7054",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"BRIJRAJ GOND",
+  photo:"images/navya.jpg"
+},
+{
+  u:"HIMANSHU YADAV",
+  p:"7055",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"HIMANSHU YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"MAYANK CHAUHAN",
+  p:"7056",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"MAYANK CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"MOHMMAD ARMAN",
+  p:"7057",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"MOHMMAD ARMAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"NEERAJ CHAUHAN",
+  p:"7058",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"NEERAJ CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"NILESH MAURYA",
+  p:"7059",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"NILESH MAURYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"NITISH GUPTA",
+  p:"7060",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"NITISH GUPTA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRINCE YADAV",
+  p:"7061",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"PRINCE YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAHUL THAKUR",
+  p:"7062",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"RAHUL THAKUR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAJ GUPTA",
+  p:"7063",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"RAJ GUPTA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAJ GUPTA",
+  p:"7064",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"RAJ GUPTA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RITESH KUMAR",
+  p:"7065",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"RITESH KUMAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ROSHAN PASWAN",
+  p:"7066",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ROSHAN PASWAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SAMAR PRATAP",
+  p:"7067",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SAMAR PRATAP",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SANNI KUMAR",
+  p:"7068",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SANNI KUMAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHANI SINGH",
+  p:"7069",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHANI SINGH",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHIVAM JAYSAWAL",
+  p:"7070",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHIVAM JAYSAWAL",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHIVAM YADAV",
+  p:"7071",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHIVAM YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHRVAN SINGH CHAUHAN",
+  p:"7072",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHRVAN SINGH CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHUBHAM YADAV",
+  p:"7073",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHUBHAM YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SIDDHARTH",
+  p:"7074",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SIDDHARTH",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SONU",
+  p:"7075",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SONU",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SUMIT CHAUHAN",
+  p:"7076",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SUMIT CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"SUMIT YADAV",
+  p:"7077",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SUMIT YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"UPENDRA YADAV",
+  p:"7078",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"UPENDRA YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ARJUN SINGH",
+  p:"7079",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"ARJUN SINGH",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHIVAM KUMAR YADAV",
+  p:"7080",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"SHIVAM KUMAR YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AKASH YADAV",
+  p:"7081",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"AKASH YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AJEET YADAV",
+  p:"7082",
+  role:"student",
+  class:7,
+  section:"A",
+  name:"AJEET YADAV",
+  photo:"images/navya.jpg"
+},
+
+// ✅ ADD INSIDE users array (TOP ya BOTTOM kahin bhi)
+{u:"Kamlesh Kumar",p:"7776",role:"teacher",class:8},
+
+{
+  u:"AMRITA YADAV",
+  p:"8001",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"AMRITA YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANANYA YADAV",
+  p:"8002",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANANYA YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANCHAL SAINI",
+  p:"8003",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANCHAL SAINI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANCHAL YADAV",
+  p:"8004",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANCHAL YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANITA ",
+  p:"8005",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANITA ",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANJALI",
+  p:"8006",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANJALI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANJALI GOND",
+  p:"8007",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANJALI GOND",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANJALI RAJBHAR",
+  p:"8008",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANJALI RAJBHAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANJANI CHAUHAN",
+  p:"8009",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANJANI CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANJU MAURYA",
+  p:"8010",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANJU MAURYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANKITA RAJBHAR",
+  p:"8011",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANKITA RAJBHAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANKITA GOND",
+  p:"8012",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANKITA GOND",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANKITA YADAV",
+  p:"8013",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANKITA YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANKITA YADAV",
+  p:"8014",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANKITA YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANSHIKA CHAUDHARI",
+  p:"8015",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANSHIKA CHAUDHARI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANURADHA CHAUHAN",
+  p:"8016",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANURADHA CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ANUSHKA MAURYA",
+  p:"8017",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANUSHKA MAURYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"BASUNDHARA YADAV",
+  p:"8018",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"BASUNDHARA YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"DIMPAL THAKUR",
+  p:"8019",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"DIMPAL THAKUR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"GUNJAN CHAUHAN",
+  p:"8020",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"GUNJAN CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"HARSHIKA CHAUHAN",
+  p:"8021",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"HARSHIKA CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"HIMANSHI SINGH",
+  p:"8022",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"HIMANSHI SINGH",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ISHU MAURYA",
+  p:"8023",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ISHU MAURYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"YASMIN PARWEEN",
+  p:"8024",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"YASMIN PARWEEN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"KAJAL CHAUHAN",
+  p:"8025",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"KAJAL CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"KHUSHBU CHAUHAN",
+  p:"8026",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"KHUSHBU CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"LAXMI YADAV",
+  p:"8027",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"LAXMI YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"NEHA ",
+  p:"8028",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"NEHA ",
+  photo:"images/navya.jpg"
+},
+{
+  u:"NISHU PASWAN",
+  p:"8029",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"NISHU PASWAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRITI GUPTA",
+  p:"8030",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRITI GUPTA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRITI SHARMA",
+  p:"8031",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRITI SHARMA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRITI",
+  p:"8032",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRITI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRIYA",
+  p:"8033",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRIYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRIYA SHARMA",
+  p:"8034",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRIYA SHARMA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RADHA YADAV",
+  p:"8035",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RADHA YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAGEENI CHAUHAN",
+  p:"8036",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RAGEENI CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RANI CHAUHAN",
+  p:"8037",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RANI CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RESHAMI",
+  p:"8038",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RESHAMI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RITU YADAV",
+  p:"8039",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RITU YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RIYA YADAV",
+  p:"8040",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RIYA YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RIYANSHI",
+  p:"8041",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RIYANSHI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SANJANA MAURYA",
+  p:"8042",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SANJANA MAURYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHALU YADAV",
+  p:"8043",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHALU YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHITAL",
+  p:"8044",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHITAL",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SNEHA ",
+  p:"8045",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SNEHA ",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SNEHA YADAV",
+  p:"8046",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SNEHA YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SONAM",
+  p:"8047",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SONAM",
+  photo:"images/navya.jpg"
+},
+{
+  u:"VIBHA CHAUHAN",
+  p:"8048",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"VIBHA CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ADITYA MADDHESHIYA",
+  p:"8049",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ADITYA MADDHESHIYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ADITYA SHARMA",
+  p:"8050",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ADITYA SHARMA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AJIT CHAUHAN",
+  p:"8052",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"AJIT CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AKASH YADAV",
+  p:"8053",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"AKASH YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ALOK YADAV",
+  p:"8054",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ALOK YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AMAN CHAUHAN",
+  p:"8055",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"AMAN CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"AMARJEET KUMAR",
+  p:"8056",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"AMARJEET KUMAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANIL CHAUHAN",
+  p:"8057",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANIL CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANISH MAURYA",
+  p:"8058",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANISH MAURYA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANKUSH",
+  p:"8059",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANKUSH",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANKUSH KUMAR GUPTA",
+  p:"8060",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANKUSH KUMAR GUPTA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANMOL KUMAR",
+  p:"8061",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANMOL KUMAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANSH THAKUR",
+  p:"8062",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANSH THAKUR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANUJ YADAV",
+  p:"8063",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANUJ YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANURAG CHAUHAN",
+  p:"8064",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANURAG CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ANURAG KUMAR",
+  p:"8065",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ANURAG KUMAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ASHISH CHAUHAN",
+  p:"8066",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ASHISH CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ASHISH MAURYA",
+  p:"8067",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ASHISH MAURYA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ASHWANI SHARMA",
+  p:"8068",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ASHWANI SHARMA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ASIF MANSURI",
+  p:"8069",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ASIF MANSURI",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"ATUL SHARMA",
+  p:"8070",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ATUL SHARMA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"AYUSH KUMAR",
+  p:"8071",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"AYUSH KUMAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"BALVEER THAKUR",
+  p:"8072",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"BALVEER THAKUR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"BALWANT CHAUHAN",
+  p:"8073",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"BALWANT CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"DEEPU BHARDWAJ",
+  p:"8074",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"AMARJEET KUMAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"DHEERAJ CHAUHAN",
+  p:"8075",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"DHEERAJ CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"DHEERAJ GUPTA",
+  p:"8076",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"DHEERAJ GUPTA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"DIPANSHU YADAV",
+  p:"8077",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"DIPANSHU YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"HARIOM YADAV",
+  p:"8078",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"HARIOM YADAV",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"HARISH THAKUR",
+  p:"8079",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"HARISH THAKUR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"HIMANSHU CHAUHAN",
+  p:"8080",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"HIMANSHU CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"HIMANSHU CHAUHAN",
+  p:"8081",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"HIMANSHU CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"HIMANSHU",
+  p:"8082",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"HIMANSHU",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"HIMANSHU SINGH CHAUHAN",
+  p:"8083",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"HIMANSHU SINGH CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"KARAN MAURYA",
+  p:"8084",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"KARAN MAURYA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"KARTIK",
+  p:"8085",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"KARTIK",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"KAUSHAL YADAV",
+  p:"8086",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"KRISHNA CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"KRISHNA SHARMA",
+  p:"8087",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"KRISHNA SHARMA",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"MD FAIJ",
+  p:"8088",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"MD FAIJ",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"MUHAMMAD ASHIK",
+  p:"8089",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"MUHAMMAD ASHIK",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"MUHAMMAD SHAHIL KHAN",
+  p:"8090",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"MUHAMMAD SHAHIL KHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"NAVEEN YADAV",
+  p:"8091",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"NAVEEN YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"NIKHIL CHAUHAN",
+  p:"8092",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"NIKHIL CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"NIKHIL KUMAR GUPTA",
+  p:"8093",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"NIKHIL KUMAR GUPTA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PAWAN GUPTA",
+  p:"8094",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PAWAN GUPTA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRABHAT CHAUHAN",
+  p:"8095",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRABHAT CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRANSHU SINGH",
+  p:"8096",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRANSHU SINGH",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRINCE CHAUHAN",
+  p:"8097",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRINCE CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRINCE KUMAR GOND",
+  p:"8098",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRINCE KUMAR GOND",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRIYANSH VISHWKARMA",
+  p:"8099",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRIYANSH VISHWKARMA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRIYANSHU PRAJAPATI",
+  p:"8100",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRIYANSHU PRAJAPATI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"PRIYANSHU",
+  p:"8101",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"PRIYANSHU",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAJ RAJBHAR",
+  p:"8102",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RAJ RAJBHAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAJKUMAR CHAUHAN",
+  p:"8103",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RAJKUMAR CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAJNEESH RAO",
+  p:"8104",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RAJNEESH RAO",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RANJEET YADAV",
+  p:"8105",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RANJEET YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAUNAK YADAV",
+  p:"8106",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RAUNAK YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAVISHANKAR GOND",
+  p:"8107",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RAVISHANKAR GOND",
+  photo:"images/navya.jpg"
+},
+{
+  u:"ROSHAN CHAUHAN",
+  p:"8108",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"ROSHAN CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SAJID ALI",
+  p:"8109",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SAJID ALI",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SANJEEV KUMAR YADAV",
+  p:"8110",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SANJEEV KUMAR YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SANOJ YADAV",
+  p:"8111",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SANOJ YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SANSKAR YADAV",
+  p:"8112",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SANSKAR YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SATYAM BHARDWAJ",
+  p:"8113",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SATYAM BHARDWAJ",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SATYANAND PANDEY",
+  p:"8114",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SATYANAND PANDEY",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHANI KUMAR",
+  p:"8115",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHANI KUMAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHIAVAM CHAUHAN",
+  p:"8116",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHIAVAM CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHIV PRATAP SINGH",
+  p:"8117",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHIV PRATAP SINGH",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHRI PRAKASH",
+  p:"8118",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHRI PRAKASH",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHUBHAM KUMAR",
+  p:"8119",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHUBHAM KUMAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHUBHAM MAURYA",
+  p:"8120",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHUBHAM MAURYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHUBHAM RAJBHAR",
+  p:"8121",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHUBHAM RAJBHAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SONU MADDHESHIYA",
+  p:"8122",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SONU MADDHESHIYA",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SUMANT CHAUHAN",
+  p:"8123",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SUMANT CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"UTKARSH CHAUHAN",
+  p:"8124",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"UTKARSH CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"VIMLESH CHAUHAN",
+  p:"8125",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"VIMLESH CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"VISHAL CHAUHAN",
+  p:"8126",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"VISHAL CHAUHAN",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"VISHAL RAJBHAR",
+  p:"8127",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"VISHAL RAJBHAR",
+  photo:"images/navya.jpg"
+},
+
+{
+  u:"VIVEK KUMAR",
+  p:"8128",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"VIVEK KUMAR",
+  photo:"images/navya.jpg"
+},
+{
+  u:"VIVEK KUMAR GAUTAM",
+  p:"8129",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"VIVEK KUMAR GAUTAM",
+  photo:"images/navya.jpg"
+},
+{
+  u:"VIVEK KUMAR YADAV",
+  p:"8130",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"VIVEK KUMAR YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SHREYANSH YADAV",
+  p:"8131",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SHREYANSH YADAV",
+  photo:"images/navya.jpg"
+},
+{
+  u:"SUMIT CHAUHAN",
+  p:"8132",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"SUMIT CHAUHAN",
+  photo:"images/navya.jpg"
+},
+{
+  u:"RAHUL THAKUR",
+  p:"8133",
+  role:"student",
+  class:8,
+  section:"A",
+  name:"RAHUL THAKUR",
+  photo:"images/navya.jpg"
+},
+
+// ✅ ADD INSIDE users array (TOP ya BOTTOM kahin bhi)
+{
+  u: "Rajesh Kumar Paswan",
+  p: "7766",
+  role: "teacher",
+  class: 9,
+  section: "A"   // 👈 MOST IMPORTANT
+}
+];
+
+
+// STUDENTS
+const class68={
+ 6:["Anushka Kumari","Archana Kumari Rav","Navya Yadav","Neha Yadav","Nitika Yadav","Prasanya Yadav","Shivangi Chauhan","Shivangi","Siya Sharma","Sonali Rajbhar","Abhinandan Yadav","Adarsh Kumar","Adtiya Chauhan","Adtiya Chauhan","Aman Maurya","Ansh Yadav","Ansh Yadav","Anuj Kumar Gupta","Anup Sharma","Arush Paswan","Aryan Yadav","Belal","Devanand Gupta","Dipanshu Chauhan","Harshit Maurya","Vivek Rajbhar","Jayshakti Maurya","Kasim Ali","Khushahal Kannaujia","Krishna Chauhan","Krishna Maddheshiya","Krishna Paswan","Mustkeen Mansuri","Naveen Maurya","Pranjal Yadav","Yashvant Chauhan","Raghav Kumar Gupta","Raghu Yadav","Rahul Sharma","Ravi Kumar","Rohit Yadav","Satyam Kumar","Satyam Kumar","Satyan Yadav","Saurabh Chauhan","Shivam Chauhan","Shivam Chauhan","Suraj Yadav"],
+ 7:["Anushka Kumari","Archana Kumari Rav","Navya Yadav","Neha Yadav","Nitika Yadav"],
+ 8:["Neeraj"]
+};
+const class912={
+ 9:{Boys:["Rahul"],Girls:["Pooja"]},
+ 10:{Boys:["Sahil"],Girls:["Riya"]},
+ 11:{Boys:["Kunal"],Girls:["Simran"]},
+ 12:{Boys:["Arjun"],Girls:["Kavya"]}
+};
+
+let attendanceData=JSON.parse(localStorage.getItem("attendance"))||{};
+const content=document.getElementById("content");
+
+// LOGIN
+
+let currentUser = null;
+
+let loggedInUser = null;
+
+function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+
+  const user = users.find(u => u.u === username && u.p === password);
+  if(user){
+    if(user.role === "teacher"){
+        loggedInUser = user;
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("teacherSidebar").style.display = "block";
+        document.getElementById("teacherMenuBtn").style.display = "block";
+        document.getElementById("teacherApp").style.display = "block";
+        showTeacherPage("dashboard");
+      }
+    else if(user.role==="student"){
+  currentUser=user;
+
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("studentSidebar").style.display="block";
+  document.getElementById("studentApp").style.display="block";
+  document.getElementById("studentHeader").style.display="flex";
+
+  document.getElementById("stuName").innerText=currentUser.name;
+  document.getElementById("stuClass").innerText=
+    currentUser.class+"-"+currentUser.section;
+  document.getElementById("stuPhoto").src=currentUser.photo;
+
+  showStudentPage("dashboard");
+}
+
+    else {
+    alert("Invalid credentials");
+    }
+  }
+
+}
+
+function logout(){location.reload();}
+
+// DASHBOARD
+function dashboard(){
+ content.innerHTML=`<h2>Welcome ${currentUser.role==="teacher"?"Teacher":currentUser.name}</h2>`;
+}
+
+// ATTENDANCE (TEACHER)
+function attendance() {
+    let clsVal = currentUser.role === "teacher" ? currentUser.class : "";
+
+    content.innerHTML=`
+    <h2>Mark Attendance</h2>
+    <input type="date" id="date" onchange="loadStu()">
+    <select id="cls" onchange="loadStu()" ${currentUser.role==="teacher"?"disabled":""}>
+      <option value="">Class</option>
+      <option ${clsVal===6?"selected":""}>6</option>
+      <option ${clsVal===7?"selected":""}>7</option>
+      <option ${clsVal===8?"selected":""}>8</option>
+      <option ${clsVal===9?"selected":""}>9</option>
+      <option ${clsVal===10?"selected":""}>10</option>
+      <option ${clsVal===11?"selected":""}>11</option>
+      <option ${clsVal===12?"selected":""}>12</option>
+    </select>
+    <select id="sec" onchange="loadStu()" style="display:none">
+      <option>Section A</option>
+      <option>Section B</option>
+    </select>
+    <div id="table"></div>
+    `;
+
+    if(currentUser.role==="teacher") {
+        document.getElementById("cls").value = currentUser.class;
+        document.getElementById("sec").value = "A"; // ✅ default section
+        loadStu();
+    }
+}
+
+
+function secToggle(){
+    const cls = document.getElementById("cls");
+    const sec = document.getElementById("sec");
+
+    if(cls.value > 8) sec.style.display = "inline";
+    else sec.style.display = "none";
+
+    loadStu();
+}
+
+
+function loadStu(){
+    const cls = document.getElementById("cls");
+    const sec = document.getElementById("sec");
+    const date = document.getElementById("date");
+    const table = document.getElementById("table");
+
+    if(!date.value) return;
+
+    // Sunday check
+    let selectedDate = new Date(date.value);
+    if(selectedDate.getDay() === 0){
+       table.innerHTML = `<p class="alert">📅 Sunday-Holiday </p>`;
+       return;
+    }
+
+    // Section display
+    if(cls.value > 8) sec.style.display = "inline";
+    else sec.style.display = "none";
+
+    let secVal = sec.value || "A";
+
+    let stu = [];
+
+    if(currentUser.role === "teacher") {
+        // teacher students
+        stu = users.filter(u => u.role==="student" && u.class == currentUser.class);
+    } else {
+        // student view
+        if(cls.value <= 8){
+            stu = class68[cls.value] || [];
+        } else {
+            stu = (class912[cls.value] && class912[cls.value][secVal]) || [];
+        }
+    }
+
+    attendanceData[date.value] = attendanceData[date.value] || {};
+    let r = "";
+
+    stu.forEach((n,i)=>{
+        let name, photo;
+        if(typeof n === "string"){
+            name = n;
+            photo = "";
+        } else {
+            name = n.name;
+            photo = n.photo || "";
+        }
+
+        let id = `${cls.value}_${secVal}_${name}`;
+        let st = attendanceData[date.value][id] || "";
+
+        r += `<tr>
+            <td>${i+1}</td>
+            <td>${photo?`<img src="${photo}" style="width:40px;height:40px;border-radius:50%;"> `:""} ${name}</td>
+            <td>${st}</td>
+            <td>
+                <button class="green" onclick="mark('${id}','P')">P</button>
+                <button class="red" onclick="mark('${id}','A')">A</button>
+            </td>
+        </tr>`;
+    });
+
+    table.innerHTML = `<table>
+        <tr><th>#</th><th>Name</th><th>Status</th><th>Action</th></tr>${r}
+        </table><button onclick="save()">Save</button>`;
+}
+
+
+function mark(id,s){
+    const date = document.getElementById("date");
+    if(!date.value) return;
+    attendanceData[date.value] = attendanceData[date.value] || {};
+    attendanceData[date.value][id] = s;
+    loadStu();
+}
+
+function save(){localStorage.setItem("attendance",JSON.stringify(attendanceData));alert("Saved");}
+
+// STUDENT ATTENDANCE
+function studentSubjects(){
+  const subjects={
+    6:["Hindi","English","Maths","Science","SST"],
+    7:["Hindi","English","Maths","Science","SST"],
+    8:["Maths","Science","English","Computer"],
+    9:["Maths","Physics","Chemistry","Biology"],
+    10:["Maths","Physics","Chemistry","Biology"]
+  };
+
+  document.getElementById("student-subjects").innerHTML=`
+    <h2>📚 Subjects</h2>
+    <ul>${(subjects[currentUser.class]||[])
+      .map(s=>`<li>${s}</li>`).join("")}</ul>
+  `;
+}
+
+function showStudentPage(page){
+  document.querySelectorAll(".student-page")
+    .forEach(p=>p.style.display="none");
+
+  document.getElementById("student-"+page).style.display="block";
+
+  if(page==="dashboard") studentDashboard();
+  if(page==="attendance") studentAttendance();
+  if(page==="subjects") studentSubjects();
+  if(page==="fees") studentFees();
+}
+
+
+function generateStudentAttendanceTable() {
+  const attendanceDiv = document.getElementById("student-attendance");
+  attendanceDiv.innerHTML = "<h2>My Attendance 📊</h2>";
+
+  // Month selector
+  const monthSelect = document.createElement("select");
+  monthSelect.style.marginBottom = "10px";
+  monthSelect.innerHTML = `<option value="">All Months</option>` + 
+    ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    .map((m,i)=>`<option value="${i}">${m}</option>`).join("");
+  attendanceDiv.appendChild(monthSelect);
+
+  const renderTable = () => {
+    const month = monthSelect.value;
+    let table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+
+    let thead = document.createElement("thead");
+    let tbody = document.createElement("tbody");
+
+    thead.innerHTML = `
+      <tr style="background:#ddd">
+        <th style="border:1px solid #ccc;padding:5px">Date</th>
+        <th style="border:1px solid #ccc;padding:5px">Status</th>
+      </tr>
+    `;
+
+    let total = 0, present = 0, absent = 0;
+
+    for (let date in attendanceByDate) {
+      const dt = new Date(date);
+      if (month !== "" && dt.getMonth() != month) continue;
+
+      const idPrefix = `${currentUser.class}_${currentUser.section}_${currentUser.name}`;
+      const status = attendanceByDate[date][idPrefix] || "-";
+      if(status === "present" || status === "absent") total++;
+      if(status === "present") present++;
+      if(status === "absent") absent++;
+
+      let tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="border:1px solid #ccc;padding:5px">${date}</td>
+        <td style="border:1px solid #ccc;padding:5px;text-align:center">
+          ${status === "present" ? "P" : status === "absent" ? "A" : "-"}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    attendanceDiv.appendChild(table);
+
+    // Summary
+    const per = total ? ((present/total)*100).toFixed(2) : 0;
+    const summary = document.createElement("div");
+    summary.innerHTML = `
+      <p>Total Classes: ${total}</p>
+      <p>Present: ${present}</p>
+      <p>Absent: ${absent}</p>
+      <p>Attendance %: ${per}% ${per<75 ? '<span style="color:red">⚠ 75% minimum</span>' : ''}</p>
+    `;
+    attendanceDiv.appendChild(summary);
+
+    // PDF Button
+    const pdfBtn = document.createElement("button");
+    pdfBtn.textContent = "Download PDF";
+    pdfBtn.style.padding = "8px 15px";
+    pdfBtn.style.background = "#28a745";
+    pdfBtn.style.color = "white";
+    pdfBtn.style.border = "none";
+    pdfBtn.style.cursor = "pointer";
+    pdfBtn.onclick = () => downloadStudentPDF(month);
+    attendanceDiv.appendChild(pdfBtn);
+  };
+
+  monthSelect.onchange = () => {
+    attendanceDiv.innerHTML = "<h2>My Attendance 📊</h2>";
+    attendanceDiv.appendChild(monthSelect);
+    renderTable();
+  };
+
+  renderTable();
+}
+
+// PDF for student
+function downloadStudentPDF(month) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text(`Attendance - ${currentUser.name}`, 10, 10);
+
+  let y = 20;
+
+  for (let date in attendanceByDate) {
+    const dt = new Date(date);
+    if (month !== undefined && month !== "" && dt.getMonth() != month) continue;
+
+    const idPrefix = `${currentUser.class}_${currentUser.section}_${currentUser.name}`;
+    const status = attendanceByDate[date][idPrefix] || "-";
+    const statusText = status === "present" ? "P" : status === "absent" ? "A" : "-";
+
+    doc.text(`${date} | Status: ${statusText}`, 10, y);
+    y += 10;
+  }
+
+  doc.save(`Attendance_${currentUser.name}.pdf`);
+}
+
+  function teacherDashboardUI() {
+
+  content.innerHTML = `
+    <div class="header">
+      <div class="header-left">
+        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+        <div>
+          <b>${currentUser.u}</b><br>
+          Class Teacher – Class ${currentUser.class}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📋 Mark Attendance</h3>
+      <p>Class ${currentUser.class} only</p>
+      <button onclick="attendance(${currentUser.class})">
+        Take Attendance
+      </button>
+    </div>
+  `;
+}
+function getClassTeacher(cls){
+  const teachers = {
+    6: { name:"Ramesh Maurya", email:"ramesh.maurya02@gmail.com", section:"A" },
+    7: { name:"Suresh Kumar", email:"suresh.kumar@gmail.com", section:"A" },
+    8: { name:"Kamlesh Kumar", email:"kamleshkumar.@gmail.com", section:"A" }
+  };
+  return teachers[cls];
+}
+
+function toggleMenu(){
+  if(teacherSidebar.style.display === "block"){
+    teacherSidebar.classList.toggle("show");
+  }
+  if(studentSidebar.style.display === "block"){
+    studentSidebar.classList.toggle("show");
+  }
+}
+
+
+function toggleTeacherSidebar(){
+  document.getElementById("teacherSidebar").classList.toggle("show");
+}
+
+
+// showTeacherPage function
+
+// Load attendance from localStorage
+let attendanceByDate = JSON.parse(localStorage.getItem("attendanceByDate")) || {};
+
+// Show Teacher Page
+function showTeacherPage(page) {
+  const pages = document.querySelectorAll(".page");
+  pages.forEach(p => p.style.display = "none");
+  document.getElementById(`teacher-${page}`).style.display = "block";
+
+  if (page === "attendance") {
+    generateAttendanceTable();
+  }
+}
+
+// Generate Attendance Table
+function generateAttendanceTable() {
+  const attendanceDiv = document.getElementById("teacher-attendance");
+  attendanceDiv.innerHTML = "<h2>Take Attendance</h2>";
+
+  // Date picker
+  const dateInput = document.createElement("input");
+  dateInput.type = "date";
+  dateInput.value = new Date().toISOString().split("T")[0]; // default today
+  dateInput.style.marginBottom = "10px";
+  attendanceDiv.appendChild(dateInput);
+
+  const date = dateInput.value;
+
+  // Initialize attendance for date if not exists
+  if (!attendanceByDate[date]) attendanceByDate[date] = {};
+
+  const teacher = loggedInUser;
+  const students = users.filter(u => u.role === "student" && u.class === teacher.class);
+
+  // Reload table when date changes
+  dateInput.onchange = () => generateAttendanceTable();
+
+  // Create table
+  let table = document.createElement("table");
+  table.style.width = "100%";
+  table.style.borderCollapse = "collapse";
+
+  let thead = document.createElement("thead");
+  let tbody = document.createElement("tbody");
+
+  thead.innerHTML = `
+    <tr style="background:#ddd">
+      <th style="border:1px solid #ccc;padding:5px">Photo</th>
+      <th style="border:1px solid #ccc;padding:5px">Name</th>
+      <th style="border:1px solid #ccc;padding:5px">Class</th>
+      <th style="border:1px solid #ccc;padding:5px">Section</th>
+      <th style="border:1px solid #ccc;padding:5px">Status</th>
+      <th style="border:1px solid #ccc;padding:5px">Action</th>
+    </tr>
+  `;
+
+  students.forEach(s => {
+    let tr = document.createElement("tr");
+    let status = attendanceByDate[date][s.u] || "";
+    let statusText = status === "present" ? "P" : status === "absent" ? "A" : "";
+
+    tr.innerHTML = `
+      <td style="border:1px solid #ccc;text-align:center;padding:5px">
+        <img src="${s.photo}" style="width:40px;height:40px;border-radius:50%">
+      </td>
+      <td style="border:1px solid #ccc;padding:5px">${s.name}</td>
+      <td style="border:1px solid #ccc;padding:5px">${s.class}</td>
+      <td style="border:1px solid #ccc;padding:5px">${s.section || ''}</td>
+      <td style="border:1px solid #ccc;text-align:center;padding:5px">${statusText}</td>
+      <td style="border:1px solid #ccc;text-align:center;padding:5px">
+        <button style="padding:5px 10px;background:green;color:white;margin-right:5px;"
+          onclick="markAttendance('${date}','${s.u}','present', this)">P</button>
+        <button style="padding:5px 10px;background:red;color:white;"
+          onclick="markAttendance('${date}','${s.u}','absent', this)">A</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  attendanceDiv.appendChild(table);
+
+  // --- Buttons container below table ---
+  const btnContainer = document.createElement("div");
+  btnContainer.style.display = "flex";
+  btnContainer.style.gap = "10px";
+  btnContainer.style.marginTop = "10px";
+
+  // Save Attendance Button
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Save Attendance";
+  saveBtn.style.padding = "8px 15px";
+  saveBtn.style.background = "#007bff";
+  saveBtn.style.color = "white";
+  saveBtn.style.border = "none";
+  saveBtn.style.cursor = "pointer";
+  saveBtn.onclick = function() {
+    localStorage.setItem("attendanceByDate", JSON.stringify(attendanceByDate));
+    alert("Attendance saved successfully for " + date);
+  };
+  btnContainer.appendChild(saveBtn);
+
+  // Download PDF Button
+  const pdfBtn = document.createElement("button");
+  pdfBtn.textContent = "Download PDF";
+  pdfBtn.style.padding = "8px 15px";
+  pdfBtn.style.background = "#28a745";
+  pdfBtn.style.color = "white";
+  pdfBtn.style.border = "none";
+  pdfBtn.style.cursor = "pointer";
+  pdfBtn.onclick = () => downloadPDF(date, students);
+  btnContainer.appendChild(pdfBtn);
+
+  attendanceDiv.appendChild(btnContainer);
+}
+
+// Mark attendance
+function markAttendance(date, studentId, status, btn) {
+  if (!attendanceByDate[date]) attendanceByDate[date] = {};
+  attendanceByDate[date][studentId] = status;
+
+  // Update table row
+  const row = btn.parentElement.parentElement;
+  row.querySelector("td:nth-child(5)").textContent = status === "present" ? "P" : "A";
+}
+
+// Download PDF
+function downloadPDF(date, students) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text(`Attendance - ${date}`, 10, 10);
+
+  let y = 20;
+  students.forEach(s => {
+    const status = attendanceByDate[date][s.u] || "";
+    const statusText = status === "present" ? "P" : status === "absent" ? "A" : "-";
+    doc.text(`${s.name} | Class: ${s.class} | Section: ${s.section || ''} | Status: ${statusText}`, 10, y);
+    y += 10;
+  });
+
+  doc.save(`Attendance_${date}.pdf`);
+}
+
+
+</script>
+</body>
+</html>
